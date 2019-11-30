@@ -9,8 +9,10 @@ function plot_it () {
     //     height = svg.attr("height"),
     //     radius = Math.min(width, height) / 2;
 
-    var g = svg.append("g")
-        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+    // var g = svg.append("g")
+    //     .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+    d3.select('svg').append('g').attr('transform', "translate(" + width / 2 + "," + height / 2 + ")").attr('id', 'piecharts')
 
     var color = d3.scaleOrdinal(['#4daf4a', '#377eb8', '#ff7f00', '#984ea3', '#e41a1c', '#964b00', '#800080']);
 
@@ -30,7 +32,7 @@ function plot_it () {
         if (error) {
             throw error;
         }
-        var arc = g.selectAll(".arc")
+        var arc = d3.select("#piecharts").selectAll(".arc")
             .data(pie(data))
             .enter().append("g")
             .attr("class", "arc");
