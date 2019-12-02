@@ -1,14 +1,16 @@
-function plot_it () {
+function plot_it() {
     var pad = 50;
-    var width = 1500, height = 600;
+    var width = 1500,
+        height = 600;
     //var radius = (height - pad * 2)/2;
-    var lines_width = width / 2 - pad * 2, lines_height = height - pad * 2;
-	var svg = d3.select('body').append('svg').attr('width', width).attr('height', height);
-	var crime_keys = ["MURDER","RAPE","ROBBERY","FELONY ASSAULT","BURGLARY","GRAND LARCENY","GRAND LARCENY OF MOTOR VEHICLE"]
+    var lines_width = width / 2 - pad * 2,
+        lines_height = height - pad * 2;
+    var svg = d3.select('body').append('svg').attr('width', width).attr('height', height);
+    var crime_keys = ["MURDER", "RAPE", "ROBBERY", "FELONY ASSAULT", "BURGLARY", "GRAND LARCENY", "GRAND LARCENY OF MOTOR VEHICLE"]
 
     // Pie Chart
-    var pieWidth = width/2,
-        pieHeight = height - pad *2;
+    var pieWidth = width / 2,
+        pieHeight = height - pad * 2;
     var piedata = null;
     var radius = Math.min(pieWidth, pieHeight) / 2;
     var currentYear = 2000;
@@ -16,6 +18,7 @@ function plot_it () {
     var color = d3.scaleOrdinal(['#4daf4a', '#377eb8', '#ff7f00', '#984ea3', '#e41a1c', '#964b00', '#ff69b4']);
 
     var pie = d3.pie().value(function (d) {
+        console.log(d[currentYear]);
         return d3.sum(d[currentYear]);
     });
 
@@ -27,8 +30,8 @@ function plot_it () {
         .outerRadius(radius)
         .innerRadius(radius - 80);
 
-    d3.select('svg').append('g').attr('transform', "translate(" + (radius+pad) + "," + (height-pad*6) + ")").attr('id', 'piecharts')
-    d3.select('svg').append('g').attr('transform', 'translate('+(width/2+pad)+','+(pad)+')').attr('id', 'lineplot')
+    d3.select('svg').append('g').attr('transform', "translate(" + (radius + pad) + "," + (height - pad * 6) + ")").attr('id', 'piecharts')
+    d3.select('svg').append('g').attr('transform', 'translate(' + (width / 2 + pad) + ',' + (pad) + ')').attr('id', 'lineplot')
 
     d3.csv("Offense.csv", function (data) {
 
@@ -48,43 +51,56 @@ function plot_it () {
                 return d;
             }); // corresponding value returned by the button
 
+        var arc = d3.select("#piecharts").selectAll()
+            .data(pie(data)).enter().append("g")
+            .attr("class", "arc");
+
+        arc.append("path")
+            .attr("d", path)
+            .attr("fill", function (d) {
+                return color(d.data.OFFENSE);
+            });
+
+        arc.append("text")
+            .attr("transform", function (d) {
+                return "translate(" + label.centroid(d) + ")";
+            })
+            .text(function (d) {
+                return d.data.OFFENSE;
+            });
+
         // A function that update the chart
         function update() {
 
             var arc = d3.select("#piecharts").selectAll(".arc")
-                .data(pie(data))
-                .enter().append("g")
-                .attr("class", "arc");
+                .data(pie(data));
 
-            arc.append("path")
+            arc.exit().remove(); //remove unneeded circles
+
+            arc.enter().append("g")
+                .attr("class", "arc");
+            
+            arc.select("path")
                 .attr("d", path)
                 .attr("fill", function (d) {
                     return color(d.data.OFFENSE);
                 });
-
-            arc.append("text")
-                .attr("transform", function (d) {
-                    return "translate(" + label.centroid(d) + ")";
-                })
+    
+            d3.select("text")
                 .text(function (d) {
                     return d.data.OFFENSE;
                 });
 
-            arc.exit()
-                .remove();
-
-            console.log('hi');
         }
 
         // When the button is changed, run the updateChart function
         d3.select("#selectButton").on("change", function () {
             // recover the option that has been chosen
             currentYear = d3.select(this).property("value");
+            console.log(currentYear);
             // run the updateChart function with this selected option
             update();
         })
-
-        update();
     });
 
     svg.append("g")
@@ -96,17 +112,17 @@ function plot_it () {
 
 
     // code for line plot
-    d3.csv("full_data.csv",function(data) {
-        var years = d3.range(2000,2019,1)
+    d3.csv("full_data.csv", function (data) {
+        var years = d3.range(2000, 2019, 1)
         var x = d3.scalePoint()
             .domain(years)
-            .range([0,lines_width]);
+            .range([0, lines_width]);
 
         var y_max = 49631;
 
         var y = d3.scaleLinear()
             .domain([0, y_max])
-            .range([lines_height, 0 ]);
+            .range([lines_height, 0]);
 
         // Add the line
         for (var i = 0; i < crime_keys.length; i++) {
@@ -126,11 +142,11 @@ function plot_it () {
         }
 
         var lines_leftaxis = d3.select('#lineplot').append("g")
-    	    .call(d3.axisLeft(y));
+            .call(d3.axisLeft(y));
 
         var lines_bottomaxis = d3.select('#lineplot').append('g')
-		    .attr('transform', 'translate('+'0'+','+ (lines_height) +')')
-    	    .call(d3.axisBottom(x));
+            .attr('transform', 'translate(' + '0' + ',' + (lines_height) + ')')
+            .call(d3.axisBottom(x));
     });
 
 
@@ -184,7 +200,7 @@ function plot_it () {
     // 	.call(d3.axisLeft(line_y_scale));
     //
     // var lines_bottomaxis = d3.select('#lineplot').append('g')
-	// 	.attr('transform', 'translate('+'0'+','+ (lines_height) +')')
+    // 	.attr('transform', 'translate('+'0'+','+ (lines_height) +')')
     // 	.call(d3.axisBottom(line_x_scale));
     //
     // var data_value = [];
@@ -193,5 +209,5 @@ function plot_it () {
     // }
     // console.log(data_value)
     // var lines = d3.select("#lineplot").selectAll('.line').data(data_value).enter().append("path").attr("class", "line").attr("d", d => each_line(d))
-	// 	.attr('fill', 'None').attr('stroke', d3.hcl(30,60,75)).attr('stroke-width', 2).attr('stroke-opacity', 0.12);
+    // 	.attr('fill', 'None').attr('stroke', d3.hcl(30,60,75)).attr('stroke-width', 2).attr('stroke-opacity', 0.12);
 }
