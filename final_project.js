@@ -18,8 +18,7 @@ function plot_it() {
     var color = d3.scaleOrdinal(['#4daf4a', '#377eb8', '#ff7f00', '#984ea3', '#e41a1c', '#964b00', '#ff69b4']);
 
     var pie = d3.pie().value(function (d) {
-        console.log(d[currentYear]);
-        return d3.sum(d[currentYear]);
+        return d[currentYear];
     });
 
     var path = d3.arc()
@@ -28,10 +27,10 @@ function plot_it() {
 
     var label = d3.arc()
         .outerRadius(radius)
-        .innerRadius(radius - 80);
+        .innerRadius(radius);
 
-    d3.select('svg').append('g').attr('transform', "translate(" + (radius + pad) + "," + (height - pad * 6) + ")").attr('id', 'piecharts')
-    d3.select('svg').append('g').attr('transform', 'translate(' + (width / 2 + pad) + ',' + (pad) + ')').attr('id', 'lineplot')
+    d3.select('svg').append('g').attr('transform', "translate(" + (radius + pad) + "," + (height - pad * 6) + ")").attr('id', 'piecharts');
+    d3.select('svg').append('g').attr('transform', 'translate(' + (width / 2 + pad) + ',' + (pad) + ')').attr('id', 'lineplot');
 
     d3.csv("Offense.csv", function (data) {
 
@@ -63,7 +62,9 @@ function plot_it() {
 
         arc.append("text")
             .attr("transform", function (d) {
-                return "translate(" + label.centroid(d) + ")";
+                if (d.data.OFFENSE == 'RAPE') {
+                    return "translate(" + label.centroid(d) + ")" + " translate(60)";
+                } else return "translate(" + label.centroid(d) + ")";
             })
             .text(function (d) {
                 return d.data.OFFENSE;
@@ -79,14 +80,19 @@ function plot_it() {
 
             arc.enter().append("g")
                 .attr("class", "arc");
-            
+
             arc.select("path")
                 .attr("d", path)
                 .attr("fill", function (d) {
                     return color(d.data.OFFENSE);
                 });
-    
-            d3.select("text")
+
+            arc.select("text")
+                .attr("transform", function (d) {
+                    if (d.data.OFFENSE == 'RAPE') {
+                        return "translate(" + label.centroid(d) + ")" + " translate(60)";
+                    } else return "translate(" + label.centroid(d) + ")";
+                })
                 .text(function (d) {
                     return d.data.OFFENSE;
                 });
@@ -97,7 +103,6 @@ function plot_it() {
         d3.select("#selectButton").on("change", function () {
             // recover the option that has been chosen
             currentYear = d3.select(this).property("value");
-            console.log(currentYear);
             // run the updateChart function with this selected option
             update();
         })
