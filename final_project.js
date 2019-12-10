@@ -146,6 +146,61 @@ function plot_it() {
                 )
         }
 
+        for (var i = 0; i < crime_keys.length; i++) {
+            d3.select("#lineplot").append('g').selectAll("circle").data(data).enter()
+                .append("circle")
+                //.datum(data)
+                .attr("cx", function (d) {
+                    return x(d.DATE);
+                })
+                .attr("cy", function (d) {
+                    return y(d[crime_keys[i]]);
+                })
+                .attr("r", 5)
+                .attr("id", function (d) {
+                    return d.id;
+                })
+                .style("fill", "#fcb0b5")
+                .on("mouseover", function(d) {
+                    d3.select(this).transition().duration(200).style("fill", "#d30715");
+
+                    d3.select("#lineplot").append('g').selectAll("#tooltip").data([d]).enter().append("text")
+                        .attr("id", "tooltip")
+                        .text(function (d) {
+                            return d[crime_keys[i]];
+                        })
+                        .attr("y", function (d) {
+                            return y(d[crime_keys[i]]) - 12
+                        })
+                        .attr("x", function (d) {
+                            return x(d.DATE);
+                        })
+
+                    d3.select("#lineplot").append('g').selectAll("#tooltip_path").data([d]).enter().append("line")
+                        .attr("id", "tooltip_path")
+                        .attr("class", "line")
+                        .attr("d", d3.line()
+                            .x(function (d) {
+                                return x(d.DATE)
+                            })
+                            .y(function (d) {
+                                return y(d[crime_keys[i]])
+                            }))
+                        .attr("x1", function(d) {return x(d.DATE)})
+                        .attr("x2", function(d) {return x(d.DATE)})
+                        .attr("y1", lines_height)
+                        .attr("y2", function(d) {return y(d[crime_keys[i]])})
+                        //.attr("y2", function(d) {return y(d[crime_keys[i]])})
+                        .attr("stroke", "black")
+                        .style("stroke-dasharray", ("3, 3"));
+                })
+                .on("mouseout", function(d) {
+                    d3.select(this).transition().duration(500).style("fill", "#fcb0b5");
+                    d3.select("#lineplot").selectAll("#tooltip").remove();
+                    d3.select("#lineplot").selectAll("#tooltip_path").remove();
+        });
+        }
+
         var lines_leftaxis = d3.select('#lineplot').append("g")
             .call(d3.axisLeft(y));
 
