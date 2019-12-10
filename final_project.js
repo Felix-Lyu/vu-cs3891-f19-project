@@ -5,21 +5,25 @@ function plot_it() {
     //var radius = (height - pad * 2)/2;
     var lines_width = width / 2 - pad * 2,
         lines_height = height - pad * 2;
-    var svg = d3.select('body').append('svg').attr('width', width).attr('height', height);
+    var div = d3.select('body').append('div').attr('class', 'wrapper');
+    var svg = d3.select('.wrapper').append('svg').attr('width', width).attr('height', height);
     var crime_keys = ["MURDER", "RAPE", "ROBBERY", "FELONY ASSAULT", "BURGLARY", "GRAND LARCENY", "GRAND LARCENY OF MOTOR VEHICLE"]
 
     // Pie Chart
     var pieWidth = width / 2,
         pieHeight = height - pad * 2;
-    var piedata = null;
     var radius = Math.min(pieWidth, pieHeight) / 2;
     var currentYear = 2000;
 
     var color = d3.scaleOrdinal(['#4daf4a', '#377eb8', '#ff7f00', '#984ea3', '#e41a1c', '#964b00', '#ff69b4']);
 
+    d3.select('svg').append('g').attr('transform', "translate(" + (radius + pad) + "," + (height - pad * 6) + ")").attr('id', 'piecharts');
+    d3.select('svg').append('g').attr('transform', 'translate(' + (width / 2 + pad) + ',' + (pad) + ')').attr('id', 'lineplot');
+
     var pie = d3.pie().value(function (d) {
-        return d[currentYear];
-    });
+            return d[currentYear];
+        })
+        .sort(null);
 
     var path = d3.arc()
         .outerRadius(radius - 10)
@@ -29,11 +33,9 @@ function plot_it() {
         .outerRadius(radius)
         .innerRadius(radius);
 
-    d3.select('svg').append('g').attr('transform', "translate(" + (radius + pad) + "," + (height - pad * 6) + ")").attr('id', 'piecharts');
-    d3.select('svg').append('g').attr('transform', 'translate(' + (width / 2 + pad) + ',' + (pad) + ')').attr('id', 'lineplot');
+
 
     d3.csv("Offense.csv", function (data) {
-
         // List of groups (here I have one group per column)
         var allGroup = ["2000", "2001", "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018"];
 
@@ -50,7 +52,7 @@ function plot_it() {
                 return d;
             }); // corresponding value returned by the button
 
-        var arc = d3.select("#piecharts").selectAll()
+        var arc = d3.select("#piecharts").selectAll('path')
             .data(pie(data)).enter().append("g")
             .attr("class", "arc");
 
@@ -69,6 +71,42 @@ function plot_it() {
             .text(function (d) {
                 return d.data.OFFENSE;
             });
+
+        // define tooltip
+        var tooltip = d3.select('.wrapper') // select element in the DOM with id 'chart'
+            .append('div') // append a div element to the element we've selected                                    
+            .attr('class', 'tooltip'); // add class 'tooltip' on the divs we just selected
+
+        tooltip.append('div') // add divs to the tooltip defined above                     
+            .attr('class', 'count'); // add class 'count' on the selection                  
+
+        tooltip.append('div') // add divs to the tooltip defined above  
+            .attr('class', 'percent'); // add class 'percent' on the selection
+
+            
+        // mouse event handlers are attached to path so they need to come after its definition
+        arc.on('mouseover', function (d) { // when mouse enters div   
+            var sum = 0;
+            data.forEach(d => {
+                sum += parseInt(d[currentYear]);
+            });
+
+
+            var percent = Math.round(1000 * parseInt(d.data[currentYear]) / sum) / 10; // calculate percent
+            tooltip.select('.count').html('Count: ' + parseInt(d.data[currentYear])); // set current count            
+            tooltip.select('.percent').html(percent + '%'); // set percent calculated above          
+            tooltip.style('display', 'block'); // set display                     
+        });
+
+        arc.on('mouseout', function () { // when mouse leaves div                        
+            tooltip.style('display', 'none'); // hide tooltip for that element
+        });
+
+        arc.on('mousemove', function (d) { // when mouse moves                  
+            tooltip.style('top', (d3.event.layerY + 10) + 'px') // always 10px below the cursor
+                .style('left', (d3.event.layerX + 10) + 'px'); // always 10px to the right of the mouse
+        });
+
 
         // A function that update the chart
         function update() {
@@ -161,7 +199,7 @@ function plot_it() {
                     return d.id;
                 })
                 .style("fill", "#fcb0b5")
-                .on("mouseover", function(d) {
+                .on("mouseover", function (d) {
                     d3.select(this).transition().duration(200).style("fill", "#d30715");
 
                     d3.select("#lineplot").append('g').selectAll("#tooltip").data([d]).enter().append("text")
@@ -186,19 +224,25 @@ function plot_it() {
                             .y(function (d) {
                                 return y(d[crime_keys[i]])
                             }))
-                        .attr("x1", function(d) {return x(d.DATE)})
-                        .attr("x2", function(d) {return x(d.DATE)})
+                        .attr("x1", function (d) {
+                            return x(d.DATE)
+                        })
+                        .attr("x2", function (d) {
+                            return x(d.DATE)
+                        })
                         .attr("y1", lines_height)
-                        .attr("y2", function(d) {return y(d[crime_keys[i]])})
+                        .attr("y2", function (d) {
+                            return y(d[crime_keys[i]])
+                        })
                         //.attr("y2", function(d) {return y(d[crime_keys[i]])})
                         .attr("stroke", "black")
                         .style("stroke-dasharray", ("3, 3"));
                 })
-                .on("mouseout", function(d) {
+                .on("mouseout", function (d) {
                     d3.select(this).transition().duration(500).style("fill", "#fcb0b5");
                     d3.select("#lineplot").selectAll("#tooltip").remove();
                     d3.select("#lineplot").selectAll("#tooltip_path").remove();
-        });
+                });
         }
 
         var lines_leftaxis = d3.select('#lineplot').append("g")
